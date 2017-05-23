@@ -47,7 +47,6 @@ type HashFiler interface {
 
 type GOCBFile struct {
 	Path    string `storm:"id"`
-	Hash    string `storm:"index"`
 	Name    string
 	Size    int64
 	ModTime time.Time
@@ -80,12 +79,8 @@ func FolderInit(fpath string) error {
 		err = db.One("Path", path, gfile)
 		if err == storm.ErrNotFound || InitializeAll {
 			gfile.Name = absPath
-			gfile.Hash = Hasher.HashFile(absPath)
 			gfile.Size = info.Size()
 			gfile.ModTime = info.ModTime()
-		}
-		if gfile.Hash == "" {
-			gfile.Hash = Hasher.HashFile(absPath)
 		}
 
 		err = db.Save(gfile)

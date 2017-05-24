@@ -9,8 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/asdine/storm"
 )
 
 var DBName = "_gocb.db"
@@ -52,13 +50,11 @@ type GOCBFile struct {
 	ModTime time.Time
 }
 
-func FolderInit(fpath string) error {
-	dbpath := filepath.Join(fpath, DBName)
-	db, err := storm.Open(dbpath)
-	defer db.Close()
-	if err != nil {
-		return err
-	}
+type GOCBFiles []GOCBFile
+
+func FolderInit(fpath string) ([]GOCBFile, error) {
+	var files []GOCBFile
+	var counter = 0
 	filepath.Walk(fpath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
@@ -67,27 +63,24 @@ func FolderInit(fpath string) error {
 			return nil
 		}
 		if Verbose {
-			log.Println("Analysing: ", path)
+			if counter%100 == 0 {
+				log.Println("Analysed: ", counter, " files")
+			}
+			// log.Println("Analysing: ", path)
 		}
 		absPath, err := filepath.Abs(path)
 		if err != nil {
 			log.Println(err)
 		}
-		gfile := &GOCBFile{
-			Path: path,
+		gfile := GOCBFile{
+			Path:    path,
+			Name:    absPath,
+			Size:    info.Size(),
+			ModTime: info.ModTime(),
 		}
-		err = db.One("Path", path, gfile)
-		if err == storm.ErrNotFound || InitializeAll {
-			gfile.Name = absPath
-			gfile.Size = info.Size()
-			gfile.ModTime = info.ModTime()
-		}
-
-		err = db.Save(gfile)
-		if err != nil {
-			log.Println(err)
-		}
+		files = append(files, gfile)
+		counter++
 		return nil
 	})
-	return nil
+	return files, nil
 }

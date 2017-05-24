@@ -1,15 +1,21 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+
+	"encoding/gob"
 
 	"github.com/as27/gocb"
 )
 
 var verbose = false
 var src string
+var gobfile = "_gocbfile"
 
 func init() {
 	wd, err := os.Getwd()
@@ -23,8 +29,25 @@ func main() {
 	flag.Parse()
 	log.Println("Initialize\n", src)
 	gocb.Verbose = verbose
-	err := gocb.FolderInit(src)
+	files, err := gocb.FolderInit(src)
+	log.Println("Finished")
 	if err != nil {
 		log.Fatal("Got an error while initializing: ", err)
 	}
+	err = writeFiles(files)
+	if err != nil {
+		log.Fatal("Got an error writing file", err)
+	}
+}
+
+func writeFiles(fs gocb.GOCBFiles) error {
+	b := &bytes.Buffer{}
+	fpath := filepath.Join(src, gobfile)
+	enc := gob.NewEncoder(b)
+	err := enc.Encode(fs)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(fpath, b.Bytes(), 0777)
+	return err
 }

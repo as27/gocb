@@ -32,12 +32,12 @@ func main() {
 			gui.Update("Status")
 			src := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
 			srcFiles, _ = gocb.FolderInit(src)
-			filesTxt := ""
+			filesList := []string{}
 			for _, f := range srcFiles {
-				filesTxt = filesTxt + f.Name + "<br>\n"
+				filesList = append(filesList, f.Name)
 			}
 			srcBox.Text("Status").Set("Filelist is ready")
-			srcBoxFilelist.Text("Files").Set(filesTxt)
+			srcBoxFilelist.List("Files").Set(filesList)
 			gui.Update("Files", "Status")
 		})
 	srcBox.Text("Status").Set("")

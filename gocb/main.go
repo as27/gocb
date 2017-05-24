@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,45 +10,45 @@ import (
 	"encoding/gob"
 
 	"github.com/as27/gocb"
+	"github.com/as27/govuegui"
 )
 
-var verbose = false
-var src string
+var gui = govuegui.NewGui()
 var gobfile = "_gocbfile"
 
-func init() {
+var srcFiles gocb.GOCBFiles
+
+func main() {
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatal("Cannot get the working directory\n", err)
+		log.Fatal(err)
 	}
-	flag.BoolVar(&verbose, "v", false, "Verbose output")
-	flag.StringVar(&src, "src", wd, "Set a source folder")
-}
-func main() {
-	flag.Parse()
-	log.Println("Initialize\n", src)
-	gocb.Verbose = verbose
-	files, err := gocb.FolderInit(src)
-	log.Println("Finished")
-	if err != nil {
-		log.Fatal("Got an error while initializing: ", err)
-	}
-	log.Println("Write files")
-	err = writeFiles(files)
-	if err != nil {
-		log.Fatal("Got an error writing file", err)
-	}
-	log.Println("Read files")
-	fs, err := readFiles()
-	if err != nil {
-		log.Fatal("Error reading: ", err)
-	}
-	for _, f := range fs {
-		log.Println(f)
-	}
+	srcForm := gui.Form("Src Folder")
+	srcBox := srcForm.Box("Src Folder")
+	srcBoxFilelist := srcForm.Box("Filelist")
+	srcBox.Button("Initalize Src").Action(
+		func() {
+			srcBox.Text("Status").Set("Initializing Files")
+			gui.Update("Status")
+			src := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
+			srcFiles, _ = gocb.FolderInit(src)
+			filesTxt := ""
+			for _, f := range srcFiles {
+				filesTxt = filesTxt + f.Name + "<br>\n"
+			}
+			srcBox.Text("Status").Set("Filelist is ready")
+			srcBoxFilelist.Text("Files").Set(filesTxt)
+			gui.Update("Files", "Status")
+		})
+	srcBox.Text("Status").Set("")
+	gui.Form("Dts Folder").Box("Dst Folder").Button("Initialize Dst")
+	gui.Form("Settings").Box("Settings").Input("Src Folder").Set(wd)
+	gui.Form("Settings").Box("Settings").Input("Dst Folder").Set(wd)
+	log.Fatal(govuegui.Serve(gui))
+	// files, err := gocb.FolderInit(src)
 }
 
-func writeFiles(fs gocb.GOCBFiles) error {
+func writeFiles(src string, fs gocb.GOCBFiles) error {
 	b := &bytes.Buffer{}
 	fpath := filepath.Join(src, gobfile)
 	enc := gob.NewEncoder(b)
@@ -60,7 +59,7 @@ func writeFiles(fs gocb.GOCBFiles) error {
 	err = ioutil.WriteFile(fpath, b.Bytes(), 0777)
 	return err
 }
-func readFiles() (gocb.GOCBFiles, error) {
+func readFiles(src string) (gocb.GOCBFiles, error) {
 	var gocbfiles gocb.GOCBFiles
 	fpath := filepath.Join(src, gobfile)
 	by, err := ioutil.ReadFile(fpath)

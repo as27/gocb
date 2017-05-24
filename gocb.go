@@ -7,16 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 )
-
-var DBName = "_gocb.db"
-
-// InitializeAll defines if all entries are generated completely new
-var InitializeAll = false
-
-var Verbose = false
 
 var Hasher HashFiler = shaHasher{}
 
@@ -58,15 +50,6 @@ func FolderInit(fpath string) ([]GOCBFile, error) {
 	filepath.Walk(fpath, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
-		}
-		if strings.HasPrefix(info.Name(), DBName) {
-			return nil
-		}
-		if Verbose {
-			if counter%100 == 0 {
-				log.Println("Analysed: ", counter, " files")
-			}
-			// log.Println("Analysing: ", path)
 		}
 		absPath, err := filepath.Abs(path)
 		if err != nil {

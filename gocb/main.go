@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"encoding/gob"
 
@@ -25,27 +27,50 @@ func main() {
 	}
 	srcForm := gui.Form("Src Folder")
 	srcBox := srcForm.Box("Src Folder")
-	srcBoxFilelist := srcForm.Box("Filelist")
+	srcBoxFilelist := srcForm.Box("Src Filelist")
+	srcStatus := srcBox.Text("Status")
+	srcStatus.Set("")
 	srcBox.Button("Initalize Src").Action(
 		func() {
-			srcBox.Text("Status").Set("Initializing Files")
-			gui.Update("Status")
-			src := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
-			srcFiles, _ = gocb.FolderInit(src)
-			filesList := []string{}
-			for _, f := range srcFiles {
-				filesList = append(filesList, f.Name)
-			}
-			srcBox.Text("Status").Set("Filelist is ready")
-			srcBoxFilelist.List("Files").Set(filesList)
-			gui.Update("Files", "Status")
+			srcPath := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
+			initFolder(srcPath, srcBox, srcBoxFilelist, srcStatus)
 		})
-	srcBox.Text("Status").Set("")
-	gui.Form("Dts Folder").Box("Dst Folder").Button("Initialize Dst")
+	dstForm := gui.Form("Dst Folder")
+	dstBox := dstForm.Box("Dst Folder")
+	dstStatus := dstBox.Text("DstStatus")
+	dstStatus.SetLabel("Status")
+	dstStatus.Set("")
+	dstBoxFilelist := dstForm.Box("Dst Filelist")
+	dstBox.Button("Initialize Dst").Action(
+		func() {
+			dstPath := gui.Form("Settings").Box("Settings").Input("Dst Folder").Get().(string)
+			initFolder(dstPath, dstBox, dstBoxFilelist, dstStatus)
+		})
+
 	gui.Form("Settings").Box("Settings").Input("Src Folder").Set(wd)
 	gui.Form("Settings").Box("Settings").Input("Dst Folder").Set(wd)
 	log.Fatal(govuegui.Serve(gui))
 	// files, err := gocb.FolderInit(src)
+}
+
+func initFolder(fpath string, box, boxFileList *govuegui.Box, boxStatus *govuegui.Element) {
+	boxStatus.Set("Initializing Files")
+	gui.Update("Status")
+	timeStart := time.Now()
+	srcFiles, _ = gocb.FolderInit(fpath)
+	timeStop := time.Now()
+	filesList := []string{}
+	for _, f := range srcFiles {
+		filesList = append(filesList, f.Name)
+	}
+	statusText := fmt.Sprintf(`Filelist is ready<br>
+			Found %d files.<br>
+			In %v`,
+		len(srcFiles),
+		timeStop.Sub(timeStart))
+	boxStatus.Set(statusText)
+	boxFileList.List("Files").Set(filesList)
+	gui.Update("Files", "Status")
 }
 
 func writeFiles(src string, fs gocb.GOCBFiles) error {

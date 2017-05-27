@@ -67,3 +67,9 @@ func FolderInit(fpath string) ([]GOCBFile, error) {
 	})
 	return files, nil
 }
+
+func CheckNotCopiedFiles(src, dst GOCBFiles) GOCBFiles {
+	var notCopiedFiles GOCBFiles
+	return notCopiedFiles
+
+}

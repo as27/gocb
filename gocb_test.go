@@ -1,29 +1,47 @@
 package gocb
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+	"time"
+)
 
-func TestFolderInit(t *testing.T) {
-	type args struct {
-		fpath string
+func TestCheckNotCopiedFiles(t *testing.T) {
+	file1 := GOCBFile{
+		Path:    "a/b/c",
+		Name:    "c",
+		Size:    123,
+		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
 	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-	// TODO: Add test cases.
+	file2 := GOCBFile{
+		Path:    "a/b/d",
+		Name:    "d",
+		Size:    234,
+		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := FolderInit(tt.args.fpath); (err != nil) != tt.wantErr {
-				t.Errorf("FolderInit() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+	file3 := GOCBFile{
+		Path:    "a/b/e",
+		Name:    "e",
+		Size:    345,
+		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
 	}
-}
-
-func TestFpath(t *testing.T) {
-	Verbose = true
-	FolderInit("../")
-
+	file1copied := GOCBFile{
+		Path:    "x/y/c",
+		Name:    "c",
+		Size:    123,
+		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
+	}
+	file2copied := GOCBFile{
+		Path:    "u/d",
+		Name:    "d",
+		Size:    234,
+		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
+	}
+	src := GOCBFiles{file1, file2, file3}
+	dst := GOCBFiles{file1copied, file2copied}
+	got := CheckNotCopiedFiles(src, dst)
+	expect := GOCBFiles{file3}
+	if !reflect.DeepEqual(got, expect) {
+		t.Error("Expect: ", expect)
+	}
 }

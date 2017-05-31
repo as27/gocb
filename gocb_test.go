@@ -25,6 +25,12 @@ func TestCheckNotCopiedFiles(t *testing.T) {
 		Size:    345,
 		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
 	}
+	file4 := GOCBFile{
+		Path:    "a/b/f",
+		Name:    "f",
+		Size:    3445,
+		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
+	}
 	file1copied := GOCBFile{
 		Path:    "x/y/c",
 		Name:    "c",
@@ -37,11 +43,11 @@ func TestCheckNotCopiedFiles(t *testing.T) {
 		Size:    234,
 		ModTime: time.Date(2006, time.January, 01, 01, 01, 10, 0, time.UTC),
 	}
-	src := GOCBFiles{file1, file2, file3}
-	dst := GOCBFiles{file1copied, file2copied}
+	src := []GOCBFile{file2, file3, file4, file1}
+	dst := []GOCBFile{file1copied, file2copied}
 	got := CheckNotCopiedFiles(src, dst)
-	expect := GOCBFiles{file3}
+	expect := []GOCBFile{file3, file4}
 	if !reflect.DeepEqual(got, expect) {
-		t.Error("Expect: ", expect)
+		t.Errorf("\nExp: %v\nGot: %v ", expect, got)
 	}
 }

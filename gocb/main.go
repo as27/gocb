@@ -20,6 +20,10 @@ var gobfile = "_gocbfile"
 
 var srcFiles gocb.GOCBFiles
 
+func init() {
+	govuegui.PathPrefix = ""
+}
+
 func main() {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -46,7 +50,38 @@ func main() {
 			dstPath := gui.Form("Settings").Box("Settings").Input("Dst Folder").Get().(string)
 			initFolder(dstPath, dstBox, dstBoxFilelist, dstStatus)
 		})
+	dblForm := gui.Form("Copy check")
+	dblBox := dblForm.Box("Check files")
 
+	dblBox.Button("Check folders").Action(
+		func() {
+			statField := dblBox.Text("DblStatus")
+			statField.SetLabel("Status")
+			srcPath := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
+			status := fmt.Sprintf("Analysing folder:<br>%s<br>", srcPath)
+			statField.Set(status)
+			gui.Update()
+			srcFiles, _ := gocb.FolderInit(srcPath)
+			dstPath := gui.Form("Settings").Box("Settings").Input("Dst Folder").Get().(string)
+			status = fmt.Sprintf("%sAnalysing folder:<br>%s<br>", status, dstPath)
+			statField.Set(status)
+			gui.Update()
+			dstFiles, _ := gocb.FolderInit(dstPath)
+			status = status + "Comparing folders...<br> "
+			statField.Set(status)
+			gui.Update()
+			doubles := gocb.CheckNotCopiedFiles(srcFiles, dstFiles)
+			filesList := []string{}
+			for _, f := range doubles {
+				filesList = append(filesList, f.Name)
+			}
+			dblForm.Box("Dbl files").List("Double files").Set(filesList)
+			status = status + "Ready"
+			statField.Set(status)
+			gui.Update()
+		})
+	statField := dblBox.Text("DblStatus")
+	statField.SetLabel("Status")
 	gui.Form("Settings").Box("Settings").Input("Src Folder").Set(wd)
 	gui.Form("Settings").Box("Settings").Input("Dst Folder").Set(wd)
 	log.Fatal(govuegui.Serve(gui))

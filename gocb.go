@@ -12,6 +12,18 @@ import (
 
 var Hasher HashFiler = shaHasher{}
 
+// Equal returns true, when the GOCB files are equal. This function can be changed
+// by the caller for a different comparison. The default comparison uses
+// -> Name
+// -> Size
+var Equal = func(f1, f2 GOCBFile) bool {
+	if f1.FileName == f2.FileName &&
+		f1.Size == f2.Size {
+		return true
+	}
+	return false
+}
+
 type shaHasher struct {
 }
 
@@ -36,10 +48,11 @@ type HashFiler interface {
 }
 
 type GOCBFile struct {
-	Path    string `storm:"id"`
-	Name    string
-	Size    int64
-	ModTime time.Time
+	Path     string `storm:"id"`
+	Name     string
+	FileName string
+	Size     int64
+	ModTime  time.Time
 }
 
 type GOCBFiles []GOCBFile
@@ -56,10 +69,11 @@ func FolderInit(fpath string) ([]GOCBFile, error) {
 			log.Println(err)
 		}
 		gfile := GOCBFile{
-			Path:    path,
-			Name:    absPath,
-			Size:    info.Size(),
-			ModTime: info.ModTime(),
+			Path:     path,
+			Name:     absPath,
+			FileName: info.Name(),
+			Size:     info.Size(),
+			ModTime:  info.ModTime(),
 		}
 		files = append(files, gfile)
 		counter++
@@ -68,8 +82,19 @@ func FolderInit(fpath string) ([]GOCBFile, error) {
 	return files, nil
 }
 
-func CheckNotCopiedFiles(src, dst GOCBFiles) GOCBFiles {
-	var notCopiedFiles GOCBFiles
-	return notCopiedFiles
+func CheckNotCopiedFiles(src, dst []GOCBFile) []GOCBFile {
+	var notCopied []GOCBFile
+SrcLoop:
+	for _, gf := range src {
+		for i, dgf := range dst {
+			if Equal(gf, dgf) {
+				fmt.Println("------->", gf, dgf)
+				dst = append(dst[:i], dst[i+1:]...)
+				continue SrcLoop
+			}
+		}
+		notCopied = append(notCopied, gf)
+	}
+	return notCopied
 
 }

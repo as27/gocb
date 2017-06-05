@@ -88,7 +88,6 @@ SrcLoop:
 	for _, gf := range src {
 		for i, dgf := range dst {
 			if Equal(gf, dgf) {
-				fmt.Println("------->", gf, dgf)
 				dst = append(dst[:i], dst[i+1:]...)
 				continue SrcLoop
 			}

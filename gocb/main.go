@@ -22,6 +22,7 @@ var srcFiles gocb.GOCBFiles
 
 func init() {
 	govuegui.PathPrefix = ""
+	gui.Title = "gocb - Go Check Backup"
 }
 
 func main() {
@@ -29,40 +30,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	srcForm := gui.Form("Src Folder")
-	srcBox := srcForm.Box("Src Folder")
-	srcBoxFilelist := srcForm.Box("Src Filelist")
-	srcStatus := srcBox.Text("Status")
-	srcStatus.Set("")
-	srcBox.Button("Initalize Src").Action(
-		func() {
-			srcPath := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
-			initFolder(srcPath, srcBox, srcBoxFilelist, srcStatus)
-		})
-	dstForm := gui.Form("Dst Folder")
-	dstBox := dstForm.Box("Dst Folder")
-	dstStatus := dstBox.Text("DstStatus")
-	dstStatus.SetLabel("Status")
-	dstStatus.Set("")
-	dstBoxFilelist := dstForm.Box("Dst Filelist")
-	dstBox.Button("Initialize Dst").Action(
-		func() {
-			dstPath := gui.Form("Settings").Box("Settings").Input("Dst Folder").Get().(string)
-			initFolder(dstPath, dstBox, dstBoxFilelist, dstStatus)
-		})
 	dblForm := gui.Form("Copy check")
 	dblBox := dblForm.Box("Check files")
 
+	statField := dblBox.Text("DblStatus")
+	statField.SetLabel("Status")
 	dblBox.Button("Check folders").Action(
-		func() {
-			statField := dblBox.Text("DblStatus")
-			statField.SetLabel("Status")
+		func(gui *govuegui.Gui) {
 			srcPath := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
+			dstPath := gui.Form("Settings").Box("Settings").Input("Dst Folder").Get().(string)
 			status := fmt.Sprintf("Analysing folder:<br>%s<br>", srcPath)
 			statField.Set(status)
 			gui.Update()
 			srcFiles, _ := gocb.FolderInit(srcPath)
-			dstPath := gui.Form("Settings").Box("Settings").Input("Dst Folder").Get().(string)
 			status = fmt.Sprintf("%sAnalysing folder:<br>%s<br>", status, dstPath)
 			statField.Set(status)
 			gui.Update()
@@ -80,10 +60,12 @@ func main() {
 			statField.Set(status)
 			gui.Update()
 		})
-	statField := dblBox.Text("DblStatus")
 	statField.SetLabel("Status")
 	gui.Form("Settings").Box("Settings").Input("Src Folder").Set(wd)
 	gui.Form("Settings").Box("Settings").Input("Dst Folder").Set(wd)
+	srcPath := gui.Form("Settings").Box("Settings").Input("Src Folder").Get().(string)
+	dstPath := gui.Form("Settings").Box("Settings").Input("Dst Folder").Get().(string)
+	dblBox.Text("Folders").Set(fmt.Sprintf("Src: %s<br>Dst: %s", srcPath, dstPath))
 	log.Fatal(govuegui.Serve(gui))
 	// files, err := gocb.FolderInit(src)
 }
